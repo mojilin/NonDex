@@ -113,25 +113,32 @@ public class ControlNondeterminism {
     }
 
     private static void initializeNondex() {
+        // Keep as is for Java8
         if (Utils.checkJDKBefore8()) {
             if (nondex == null) {
                 nondex = NonDex.getInstance();
             }
             return;
         }
+
         try {
+            // TODO: For now, we use such ugly check condition
+            //  because JVM will crash if invoke isBooted() upon System.initPhase1
             if (System.out == null) {
                 return;
             }
             Method isBooted = Class.forName("jdk.internal.misc.VM").getDeclaredMethod("isBooted");
             if ((Boolean)isBooted.invoke(null) && nondex == null && !isCreatingNonDex) {
                 isCreatingNonDex = true;
-                // Call getStackTrace here to bypass can't initialize class StackTraceElement$HashedModules exception
+
+                // Call getStackTrace here to bypass exception "can't initialize class StackTraceElement$HashedModules"
                 Thread.currentThread().getStackTrace();
                 nondex = NonDex.getInstance();
             }
         } catch (Exception ex) {
-            Logger.getGlobal().log(Level.INFO, "Reflection error when loading jdk.internal.misc.VM" + ex.getMessage());
+
+            Logger.getGlobal().log(Level.INFO,
+                    "Exception when loading jdk.internal.misc.VM with reflection" + ex.getMessage());
         }
     }
 

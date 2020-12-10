@@ -121,6 +121,7 @@ public final class Instrumenter {
                     Logger.getGlobal().log(Level.WARNING, "Could not find " + className + " in rt.jar");
                     Logger.getGlobal().log(Level.WARNING, "Are you running java 8?");
                     Logger.getGlobal().log(Level.WARNING, "Continuing without instrumenting: " + className);
+                    return null;
                 }
                 clInputStream = rtZipFile.getInputStream(entry);
                 return clInputStream;
@@ -218,6 +219,9 @@ public final class Instrumenter {
             throws IOException, NoSuchAlgorithmException {
         for (String cl : this.standardClassesToInstrument) {
             InputStream clInputStream = this.getInputStream(cl);
+            if (clInputStream == null) {
+                continue;
+            }
 
             this.writeMd5(clInputStream, cl + ".md5", outZip);
 
@@ -279,6 +283,10 @@ public final class Instrumenter {
                                  Function<ClassVisitor, ClassVisitor> createShuffler,
                                  ZipOutputStream outZip) throws IOException {
         InputStream classStream = this.getInputStream(className);
+        if (classStream == null) {
+            return;
+        }
+
         ClassReader cr = new ClassReader(classStream);
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         ClassVisitor cv = createShuffler.apply(cw);
